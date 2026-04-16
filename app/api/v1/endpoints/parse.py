@@ -64,7 +64,7 @@ async def parse_pdf_from_path_endpoint(
         if fmt == "json":
             return JSONResponse(content=result)
         else:
-            return PlainTextResponse(content=result, media_type="application/xml")
+            return PlainTextResponse(content=result, media_type="application/xml; charset=windows-1251")
     except SettingsNotFoundError as e:
         raise HTTPException(400, str(e))
     except ParsingError as e:
