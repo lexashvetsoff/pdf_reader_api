@@ -18,5 +18,5 @@ def list_dict_to_xml_string(data: List[Dict[str, Any]], root_tag='root', element
     # Возвращаем строку, а не пишем в файл
     import io
     with io.BytesIO() as f:
-        tree.write(f, encoding='utf-8', xml_declaration=True)
-        return f.getvalue().decode('utf-8')
+        tree.write(f, encoding='cp1251', xml_declaration=True)
+        return f.getvalue().decode('cp1251')
