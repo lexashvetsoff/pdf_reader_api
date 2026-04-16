@@ -9,7 +9,7 @@ from app.config import get_raw_settings
 router = APIRouter()
 
 
-@router.post("/parse")
+@router.post("/parse_bin")
 async def parse_pdf_endpoint(
     file: UploadFile = File(...),
     code: str = Form(...),
@@ -17,6 +17,7 @@ async def parse_pdf_endpoint(
     output_format: str = Form(None),
     raw_settings: dict = Depends(get_raw_settings)
 ):
+    '''На вход получает двоичные данные, возвращает строку'''
     if doc_type not in ("Reestr", "Protocol"):
         raise HTTPException(400, "doc_type must be 'Reestr' or 'Protocol'")
     
@@ -41,3 +42,36 @@ async def parse_pdf_endpoint(
     finally:
         if temp_path:
             delete_temp_file(temp_path)
+
+
+@router.post("/parce_file")
+async def parse_pdf_from_path_endpoint(
+    file_path: str,
+    code: str,
+    doc_type: str = 'Reestr',
+    output_format: str = 'xml',
+    raw_settings: dict = Depends(get_raw_settings)
+):
+    '''На вход получает путь к файлу, возвращает строку'''
+    if doc_type not in ("Reestr", "Protocol"):
+        raise HTTPException(400, "doc_type must be 'Reestr' or 'Protocol'")
+    
+    if not file_path.lower().endswith('.pdf'):
+        raise HTTPException(400, "Only PDF files are allowed")
+    
+    try:
+        result, fmt = run_parsing(file_path, code, doc_type, raw_settings, output_format)
+        
+        if fmt == "json":
+            return JSONResponse(content=result)
+        else:
+            return PlainTextResponse(content=result, media_type="application/xml")
+    except SettingsNotFoundError as e:
+        raise HTTPException(400, str(e))
+    except ParsingError as e:
+        raise HTTPException(422, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Internal server error: {str(e)}")
+    finally:
+        if file_path:
+            delete_temp_file(file_path)
